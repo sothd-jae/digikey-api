@@ -104,7 +104,7 @@ class TokenHandler:
                  a_token_storage_path: t.Optional[str] = None,
                  version: int = 2,
                  sandbox: bool = False,
-                 redirect_uri: t.Optional[str] = None
+                 a_redirect_uri: t.Optional[str] = None
                  ):
 
         if version == 3:
@@ -136,12 +136,20 @@ class TokenHandler:
                 'or pass your keys directly to the client.'
             )
 
+        a_redirect_uri = a_redirect_uri or os.getenv('DIGIKEY_REDIRECT_URI')
+        if not a_redirect_uri:
+            raise ValueError(
+                'REDIRECT URI must be set.'
+                'Set "DIGIKEY_REDIRECT_URI" as an environment variable, '
+                'or pass your keys directly to the client.'
+            )
+
         self._id = a_id
         self._secret = a_secret
         self._storage_path = Path(a_token_storage_path)
         self._token_storage_path = self._storage_path.joinpath(TOKEN_STORAGE)
         self._ca_cert = self._storage_path.joinpath(CA_CERT)
-        self._redirect_uri = redirect_uri or REDIRECT_URI_DEFAULT
+        self._redirect_uri = a_redirect_uri or REDIRECT_URI_DEFAULT
 
     def __generate_certificate(self):
         ca = CertificateAuthority('Python digikey-api CA', str(self._ca_cert), cert_cache=str(self._storage_path))
