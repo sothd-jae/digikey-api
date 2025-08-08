@@ -25,7 +25,7 @@ TOKEN_URL_V3_PROD = 'https://api.digikey.com/v1/oauth2/token'
 AUTH_URL_V3_SB = 'https://sandbox-api.digikey.com/v1/oauth2/authorize'
 TOKEN_URL_V3_SB = 'https://sandbox-api.digikey.com/v1/oauth2/token'
 
-REDIRECT_URI = 'https://localhost:8139/digikey_callback'
+REDIRECT_URI_DEFAULT = 'https://localhost:8139/digikey_callback'
 PORT = 8139
 
 logger = logging.getLogger(__name__)
@@ -103,9 +103,11 @@ class TokenHandler:
                  a_secret: t.Optional[str] = None,
                  a_token_storage_path: t.Optional[str] = None,
                  version: int = 2,
-                 sandbox: bool = False):
+                 sandbox: bool = False,
+                 redirect_uri: t.Optional[str] = None
+                 ):
 
-        if version == 3 or version == 4:
+        if version == 3:
             if sandbox:
                 self.auth_url = AUTH_URL_V3_SB
                 self.token_url = TOKEN_URL_V3_SB
@@ -139,6 +141,7 @@ class TokenHandler:
         self._storage_path = Path(a_token_storage_path)
         self._token_storage_path = self._storage_path.joinpath(TOKEN_STORAGE)
         self._ca_cert = self._storage_path.joinpath(CA_CERT)
+        self._redirect_uri = redirect_uri or REDIRECT_URI_DEFAULT
 
     def __generate_certificate(self):
         ca = CertificateAuthority('Python digikey-api CA', str(self._ca_cert), cert_cache=str(self._storage_path))
@@ -147,11 +150,11 @@ class TokenHandler:
     def __build_authorization_url(self) -> str:
         params = {'client_id': self._id,
                   'response_type': 'code',
-                  'redirect_uri': REDIRECT_URI
+                  'redirect_uri': self._redirect_uri
                   }
         url = self.auth_url + '?' + urlencode(params)
         logger.debug(f'AUTH - Authenticating with endpoint {self.auth_url} using ID: {self._id[:-5]}...')
-        logger.debug(f'AUTH - Redirect URL: {REDIRECT_URI}')
+        logger.debug(f'AUTH - Redirect URL: {self._redirect_uri}')
         return url
 
     def __exchange_for_token(self, code):
@@ -162,7 +165,7 @@ class TokenHandler:
                      'code': code,
                      'client_id': self._id,
                      'client_secret': self._secret,
-                     'redirect_uri': REDIRECT_URI
+                     'redirect_uri': self._redirect_uri
                      }
 
         try:
@@ -248,13 +251,14 @@ class TokenHandler:
         if token_json is None:
             open_new(self.__build_authorization_url())
             filename = self.__generate_certificate()
+            context = ssl.SSLContext(protocol=ssl.PROTOCOL_TLS_SERVER)
+            context.load_cert_chain(certfile=filename)
+
             httpd = HTTPServer(
                     ('localhost', PORT),
                     lambda request, address, server: HTTPServerHandler(
                         request, address, server, self._id, self._secret))
-            context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-            context.load_cert_chain(str(Path(filename)))
-            httpd.socket=context.wrap_socket(httpd.socket,server_side=True,)
+            httpd.socket = context.wrap_socket(httpd.socket, server_side=True)
             httpd.stop = 0
 
             # This function will block until it receives a request
