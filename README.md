@@ -22,6 +22,7 @@ mkdir -p $cache_dir
 export DIGIKEY_CLIENT_ID="client_id"
 export DIGIKEY_CLIENT_SECRET="client_secret"
 export DIGIKEY_STORAGE_PATH="${cache_dir}"
+export DIGIKEY_REDIRECT_URI="https://localhost:8139/digikey_callback"
 ```
 
 The cache dir is used to store the OAUTH access and refresh token, if you delete it you will need to login again.
@@ -32,7 +33,7 @@ Register an app on the Digikey API portal: [Digi-Key API V4](https://developer.d
 the client ID and the client secret to use the API. You will also need a Digi-Key account to authenticate, using the
 Oauth2 process.
 
-When registering an app the OAuth Callback needs to be set to `https://localhost:8139/digikey_callback`.
+When registering an app the OAuth Callback needs to be set to the same value as `DIGIKEY_REDIRECT_URI` (`https://localhost:8139/digikey_callback`).
 
 ## Use [API V4]
 Python will automatically spawn a browser to allow you to authenticate using the Oauth2 process. After obtaining a token
@@ -53,18 +54,20 @@ from digikey.v4.productinformation import KeywordRequest
 from digikey.v4.batchproductdetails import BatchProductDetailsRequest
 
 CACHE_DIR = Path('path/to/cache/dir')
+CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 os.environ['DIGIKEY_CLIENT_ID'] = 'client_id'
 os.environ['DIGIKEY_CLIENT_SECRET'] = 'client_secret'
 os.environ['DIGIKEY_CLIENT_SANDBOX'] = 'False'
 os.environ['DIGIKEY_STORAGE_PATH'] = CACHE_DIR
+os.environ['DIGIKEY_REDIRECT_URI'] = 'https://localhost:8139/digikey_callback'
 
 # Query product number
 dkpn = '296-6501-1-ND'
 part = digikey.product_details(dkpn)
 
 # Search for parts
-search_request = KeywordSearchRequest(keywords='CRCW080510K0FKEA', limit=10, offset = 0)
+search_request = KeywordRequest(keywords='CRCW080510K0FKEA', limit=10, offset=0)
 result = digikey.keyword_search(body=search_request)
 
 # Only if BatchProductDetails endpoint is explicitly enabled
