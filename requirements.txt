@@ -1,5 +1,4 @@
 inflection
-certauth
 requests
 retrying
 urllib3
@@ -7,3 +6,4 @@ responses
 six
 certifi
 setuptools
+trustme
