@@ -1210,6 +1210,7 @@ class ProductSearchApi(object):
 
         :param async_req bool
         :param str product_number: The product to retrieve details for. (required)
+        :param str manufacturer_id: The Manufacturer Id for the product.
         :param str x_digikey_client_id: The Client Id for your App. (required)
         :param str includes:
         :param str authorization: OAuth Bearer Token. Please see<a href= \"https://developer.digikey.com/documentation/oauth\" target= \"_blank\" > OAuth 2.0 Documentation </a > page for more info.
@@ -1225,7 +1226,7 @@ class ProductSearchApi(object):
                  returns the request thread.
         """
 
-        all_params = ['product_number', 'x_digikey_client_id', 'includes', 'authorization', 'x_digikey_locale_site', 'x_digikey_locale_language', 'x_digikey_locale_currency', 'x_digikey_customer_id', 'x_digikey_locale_site', 'x_digikey_locale_language', 'x_digikey_locale_currency']  # noqa: E501
+        all_params = ['product_number', 'manufacturer_id', 'x_digikey_client_id', 'includes', 'authorization', 'x_digikey_locale_site', 'x_digikey_locale_language', 'x_digikey_locale_currency', 'x_digikey_customer_id', 'x_digikey_locale_site', 'x_digikey_locale_language', 'x_digikey_locale_currency']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -1256,6 +1257,8 @@ class ProductSearchApi(object):
             path_params['productNumber'] = params['product_number']  # noqa: E501
 
         query_params = []
+        if 'manufacturer_id' in params:
+            query_params.append(('manufacturerId', params['manufacturer_id']))  # noqa: E501
         if 'includes' in params:
             query_params.append(('includes', params['includes']))  # noqa: E501
 
