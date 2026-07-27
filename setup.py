@@ -27,7 +27,7 @@ setuptools.setup(
         'requests>=2.22.0',
         'retrying>=1.3.3',
         'inflection>=0.3.1',
-        'certauth>=1.3.0',
+        'trustme>=1.2.1',
         'urllib3>=1.25.3'
     ],
     tests_requires=['pytest>=5.1.2'],

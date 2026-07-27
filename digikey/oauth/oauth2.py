@@ -11,7 +11,7 @@ from urllib.parse import urlencode, urlparse, parse_qs
 from webbrowser import open_new
 
 import requests
-from certauth.certauth import CertificateAuthority
+import trustme
 
 from digikey.constants import USER_AGENT
 from digikey.exceptions import DigikeyOauthException
@@ -152,8 +152,24 @@ class TokenHandler:
         self._redirect_uri = a_redirect_uri or REDIRECT_URI_DEFAULT
 
     def __generate_certificate(self):
-        ca = CertificateAuthority('Python digikey-api CA', str(self._ca_cert), cert_cache=str(self._storage_path))
-        return ca.cert_for_host('localhost')
+        host_cert_path = self._storage_path / "localhost.pem"
+        if not host_cert_path.exists() or not self._ca_cert.exists():
+            # 1. Generates a fresh, modern Root CA and a localhost certificate
+            ca = trustme.CA()
+            server_cert = ca.issue_cert("localhost")
+
+            # 2. Save the Root CA public certificate (so the client can trust it)
+            self._ca_cert.write_bytes(ca.cert_pem.bytes())
+            
+            # 3. Bundle the SERVER'S private key and SERVER'S public certificate chain
+            # (This matches how certauth packs them into a single file)
+            combined_pem = (
+                server_cert.private_key_pem.bytes() + 
+                server_cert.cert_chain_pems[0].bytes()
+            )
+            host_cert_path.write_bytes(combined_pem)
+            
+        return str(host_cert_path)
 
     def __build_authorization_url(self) -> str:
         params = {'client_id': self._id,
